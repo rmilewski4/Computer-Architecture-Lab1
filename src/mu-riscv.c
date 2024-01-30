@@ -469,6 +469,7 @@ void handle_instruction()
 	uint32_t opcode = instruction & 51;
 	switch(opcode) {
 		case(51):
+			//TODO: Shift bits to the right to align properly i.e. rd needs to be shifted right 7 bits
 			uint32_t rd = instruction & 3968;
 			uint32_t funct3 = instruction & 28672;
 			uint32_t rs1 = instruction & 1015808;
