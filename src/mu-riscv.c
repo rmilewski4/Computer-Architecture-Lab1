@@ -463,8 +463,23 @@ void handle_instruction()
 {
 	/*IMPLEMENT THIS*/
 	/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
+	//Get instruction by reading current PC
 	uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
+	//51 in base-10 is = 1111111, which will allow us to extract the opcode from the instruction
 	uint32_t opcode = instruction & 51;
+	switch(opcode) {
+		case(51):
+			uint32_t rd = instruction & 3968;
+			uint32_t funct3 = instruction & 28672;
+			uint32_t rs1 = instruction & 1015808;
+			uint32_t rs2 = instruction & 32505856;
+			uint32_t funct7 = instruction & 4261412864;
+			R_Processing(rd,funct3,rs1,rs2,funct7);
+			break;
+		default:
+			printf("OPCODE NOT FOUND!\n\n");
+			break;
+	}
 	printf("%x\n",opcode);
 }
 
