@@ -463,6 +463,9 @@ void handle_instruction()
 {
 	/*IMPLEMENT THIS*/
 	/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
+	uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
+	uint32_t opcode = instruction & 51;
+	printf("%x\n",opcode);
 }
 
 
