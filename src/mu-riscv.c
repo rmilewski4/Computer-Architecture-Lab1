@@ -465,23 +465,26 @@ void handle_instruction()
 	/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
 	//Get instruction by reading current PC
 	uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
-	//51 in base-10 is = 1111111, which will allow us to extract the opcode from the instruction
-	uint32_t opcode = instruction & 51;
+	printf("%x\n",instruction);
+	//127 in base-10 is = 1111111 in base 2, which will allow us to extract the opcode from the instruction
+	uint32_t opcode = instruction & 127;
 	switch(opcode) {
 		case(51):
-			//TODO: Shift bits to the right to align properly i.e. rd needs to be shifted right 7 bits
-			uint32_t rd = instruction & 3968;
-			uint32_t funct3 = instruction & 28672;
-			uint32_t rs1 = instruction & 1015808;
-			uint32_t rs2 = instruction & 32505856;
-			uint32_t funct7 = instruction & 4261412864;
+			//TODO: Implement I-type instructions, figure out how to end program.
+			uint32_t rd = (instruction & 3968) >> 7;
+			uint32_t funct3 = (instruction & 28672) >> 12;
+			uint32_t rs1 = (instruction & 1015808) >> 15;
+			uint32_t rs2 = (instruction & 32505856) >> 20;
+			uint32_t funct7 = (instruction & 4261412864) >> 25;
+	 		printf("funct7: %d\n rs2: %d\n rs1: %d\n funct3: %d\n rd: %d\n opcode: %d\n",funct7,rs2,rs1,funct3,rd,opcode);
 			R_Processing(rd,funct3,rs1,rs2,funct7);
 			break;
 		default:
 			printf("OPCODE NOT FOUND!\n\n");
 			break;
 	}
-	printf("%x\n",opcode);
+	//Updates program counter, each instruction is 4 bytes.
+	NEXT_STATE.PC += 4;
 }
 
 
