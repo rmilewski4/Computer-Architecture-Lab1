@@ -464,9 +464,19 @@ void handle_instruction()
 	//test
 	/*IMPLEMENT THIS*/
 	/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
+	
+	//opcode has 7 bits (0-6)
+	//rd has 5 bits (7-11)
+	//func3 has 3 bits(12 - 14)
+	//rs1 has 5 bits (15 - 19)
+	//rs2 has 5 bits (20 - 24)
+	//func7 has 7 bits (25 - 31)
+
+
 	uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
-	uint32_t opcode = instruction & 51;
-	printf("%x\n",opcode);
+	
+	//uint32_t opcode = instruction & 51;
+	//printf("%x\n",opcode);
 }
 
 
