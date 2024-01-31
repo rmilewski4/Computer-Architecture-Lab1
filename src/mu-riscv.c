@@ -461,6 +461,7 @@ void U_Processing() {
 /************************************************************/
 void handle_instruction()
 {
+	//test
 	/*IMPLEMENT THIS*/
 	/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
 	uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
@@ -484,6 +485,7 @@ void initialize() {
 /* Print the program loaded into memory (in RISCV assembly format)    */ 
 /************************************************************/
 void print_program(){
+
 	/*IMPLEMENT THIS*/
 	/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
 }
