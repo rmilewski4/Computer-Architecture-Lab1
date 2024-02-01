@@ -459,6 +459,8 @@ void U_Processing() {
 /************************************************************/
 /* decode and execute instruction                                                                     */ 
 /************************************************************/
+//TODO: Need to add a SYSCALL instruction to the input.txt and actually implement the SYSCALL to end the program (see the lab pdf for info)
+//Verify output of handle_instruction is correct, implement the print program.
 void handle_instruction()
 {
 	/*IMPLEMENT THIS*/
@@ -478,7 +480,6 @@ void handle_instruction()
 	switch(opcode) {
 		//R-type instructions
 		case(51):
-			//TODO: Implement I-type instructions, figure out how to end program.
 			rd = (instruction & 3968) >> 7;
 			funct3 = (instruction & 28672) >> 12;
 			rs1 = (instruction & 1015808) >> 15;
