@@ -461,7 +461,25 @@ void U_Processing() {
 /************************************************************/
 void handle_instruction()
 {
-	//test
+	// if(opcode == 51) { //R-type
+	// 		uint32_t maskrd = 0xF80;
+	// 		uint32_t rd = instruction & maskrd;
+	// 		rd = rd >> 7;
+	// 		uint32_t maskf3 = 0x7000;
+	// 		uint32_t f3 = instruction & maskf3;
+	// 		f3 = f3 >> 12;
+	// 		uint32_t maskrs1 = 0xF8000;
+	// 		uint32_t rs1 = instruction & maskrs1;
+	// 		rs1 = rs1 >> 15;
+	// 		uint32_t maskrs2 = 0x1F00000;
+	// 		uint32_t rs2 = instruction & maskrs2;
+	// 		rs2 = rs2 >> 20;
+	// 		uint32_t maskf7 = 0xFE000000;
+	// 		uint32_t f7 = instruction & maskf7;
+	// 		f7 = f7 >> 25;
+	// 		R_Print(rd,f3,rs1,rs2,f7);
+	// 	}
+
 	/*IMPLEMENT THIS*/
 	/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
 	
@@ -471,9 +489,31 @@ void handle_instruction()
 	//rs1 has 5 bits (15 - 19)
 	//rs2 has 5 bits (20 - 24)
 	//func7 has 7 bits (25 - 31)
-
+	//func7 starts in hex from left to right
 
 	uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
+
+	uint32_t maskopcode = 0x7F;
+	uint32_t opcode = instruction & maskopcode;
+	printf("opcode is %x", opcode);
+	uint32_t maskrd = 0xF80;
+	uint32_t rd = instruction & maskrd;
+	rd = rd >> 7;
+	uint32_t maskf3 = 0x7000;
+	uint32_t f3 = instruction & maskf3;
+	f3 = f3 >> 12;
+	uint32_t maskrs1 = 0xF8000;
+	uint32_t rs1 = instruction & maskrs1;
+	rs1 = rs1 >> 15;
+	uint32_t maskrs2 = 0x1F00000;
+	uint32_t rs2 = instruction & maskrs2;
+	rs2 = rs2 >> 20;
+	uint32_t maskf7 = 0xFE000000;
+	uint32_t f7 = instruction & maskf7;
+	f7 = f7 >> 25;
+
+
+	
 	
 	//uint32_t opcode = instruction & 51;
 	//printf("%x\n",opcode);
@@ -484,6 +524,7 @@ void handle_instruction()
 /* Initialize Memory                                                                                                    */ 
 /************************************************************/
 void initialize() { 
+	
 	init_memory();
 	CURRENT_STATE.PC = MEM_TEXT_BEGIN;
 	CURRENT_STATE.REGS[2] = MEM_STACK_BEGIN;
