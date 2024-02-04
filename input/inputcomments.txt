@@ -1,0 +1,8 @@
+01498933
+41498933
+0149F933
+0149E933
+0009A903
+01392023
+00A00893 //addi x17, x0, 10 to get ready for ecall, set a2 to 10 as specified
+00000073 //ECALL

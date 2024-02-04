@@ -443,7 +443,20 @@ void S_Processing(uint32_t imm4, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32
 		break;
 	}
 }
+void ECall_Processing() {
+	//Need to read register 17 to discover operation
+	uint32_t a2 = CURRENT_STATE.REGS[17];
+	switch(a2) {
+		//exit
+		case 10:
+			RUN_FLAG = FALSE;
+			break;
 
+		default:
+			printf("Invalid ECall!");
+			break;
+	}
+}
 void B_Processing() {
 	// hi
 }
@@ -515,6 +528,10 @@ void handle_instruction()
 			imm = (instruction & 4261412864) >> 25;
 	 		printf("imm[11:5]: %d\n rs2: %d\n rs1: %d\n funct3: %d\n imm[4:0]: %d\n opcode: %d\n",imm,rs2,rs1,funct3,imm2,opcode);
 			S_Processing(imm2,funct3,rs1,rs2,imm);
+			break;
+		//SYSCALL/ECall opcode
+		case(115):
+			ECall_Processing();
 			break;
 		default:
 			printf("OPCODE NOT FOUND!\n\n");
