@@ -429,8 +429,7 @@ void S_Processing(uint32_t imm4, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32
 		mem_write_32((NEXT_STATE.REGS[rs1] + imm), NEXT_STATE.REGS[rs2]);
 		break;
 	
-	case 1: //sh
-		mem_write_32((NEXT_STATE.REGS[rs1] + imm), NEXT_STATE.REGS[rs2]);
+	case 1: //sh			ILoad_Processing(rd,funct3,rs1,imm);mm), NEXT_STATE.REGS[rs2]);
 		break;
 
 	case 2: //sw
@@ -535,6 +534,12 @@ void handle_instruction()
 			break;
 		default:
 			printf("OPCODE NOT FOUND!\n\n");
+			break;rd = (instruction & 3968) >> 7;
+			funct3 = (instruction & 28672) >> 12;
+			rs1 = (instruction & 1015808) >> 15;
+			imm = (instruction & 4293918720) >> 20;
+	 		printf("imm: %d\n rs1: %d\n funct3: %d\n rd: %d\n opcode: %d\n",imm,rs1,funct3,rd,opcode);
+			ILoad_Processing(rd,funct3,rs1,imm);
 			break;
 	}
 	//Updates program counter, each instruction is 4 bytes.
@@ -560,25 +565,72 @@ void initialize() {
 /* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
 void print_program(){
 	CURRENT_STATE.PC = MEM_TEXT_BEGIN;
-	NEXT_STATE.PC = MEM_TEXT_BEGIN;
+	NEXT_STATE.PC = MEM_TEXT_BEGIN + 4;
+	
 
 	uint32_t addressMemory;
-	for(int i = 0; i < INSTRUCTION_COUNT; i++){
+	int i = 0;
+	while(i < INSTRUCTION_COUNT){
 		addressMemory = CURRENT_STATE.PC;
 		
-		printf("Registers after executing instruction %d:\n", i + 1);
+		
+		printf("Instruction %d:\n", i + 1);
 		print_instruction(addressMemory);
 		
 		NEXT_STATE.PC += 4;
+		i++;
 	}
-		
 }
 
 	
 
-void R_Print(uint32_t rd, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32_t f7) {
+void S_PRINT(uint32_t imm11, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32_t imm4){
+	uint32_t imm = (imm4<< 5) + imm11;
 
-	printf("rd is %d, f3 is %d, rs1 is %d, rs2 is %d, f7 is %d\n\n", rd, f3, rs1, rs2, f7);
+	switch (f3)
+		{
+		case 0: //sb
+			printf("sb %d(x%d), x%d\n", imm, rs1, rs2);
+			//mem_write_32((NEXT_STATE.REGS[rs1] + imm), NEXT_STATE.REGS[rs2]);
+			break;
+		
+		case 1: //sh		
+			printf("sh %d(x%d), x%d\n", imm, rs1, rs2);
+			break;
+
+		case 2: //sw
+			printf("sw %d(x%d), x%d\n", imm, rs1, rs2);
+			//mem_write_32((NEXT_STATE.REGS[rs1] + imm), NEXT_STATE.REGS[rs2]);
+			break;
+
+		default:
+			RUN_FLAG = FALSE;
+			break;
+	}
+	
+
+}
+
+void I_PRINT(uint32_t imm, uint32_t f3, uint32_t rs1, uint32_t rd){
+	switch (f3){
+		case 0: //lb
+			printf("lb x%d, %d(x%d)\n", rd, imm, rs1);
+			//NEXT_STATE.REGS[rd] = byte_to_word((mem_read_32(NEXT_STATE.REGS[rs1] + imm)) & 0xFF);
+			break;
+
+		case 1: //lhS_PRINT(imm2, funct3, rs1, rs2, imm);
+			printf("lw x%d, %d(x%d)\n", rd, imm, rs1);
+			//NEXT_STATE.REGS[rd] = mem_read_32(NEXT_STATE.REGS[rs1] + imm);
+			break;
+		
+		default:
+			printf("Invalid instruction");
+			RUN_FLAG = FALSE;
+			break;
+	}
+}
+
+void Iimm_PRINT(){
 
 }
 
@@ -589,9 +641,10 @@ void R_Print(uint32_t rd, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32_t f7) 
 void print_instruction(uint32_t addr){
 
 	uint32_t instruction = mem_read_32(addr);
-		uint32_t maskopcode = 0x7F;
-		uint32_t opcode = instruction & maskopcode;
-		if(opcode == 51) { //R-type
+	uint32_t maskopcode = 0x7F;
+	uint32_t opcode = instruction & maskopcode;
+	switch(opcode){
+		case(51): //R-type
 			uint32_t maskrd = 0xF80;
 			uint32_t rd = instruction & maskrd;
 			rd = rd >> 7;
@@ -608,12 +661,28 @@ void print_instruction(uint32_t addr){
 			uint32_t f7 = instruction & maskf7;
 			f7 = f7 >> 25;
 			R_Print(rd,f3,rs1,rs2,f7);
-		} else {
+			break;
+		case(35): //S-type
+			uint32_t imm2 = (instruction & 3968) >> 7;
+			uint32_t funct3 = (instruction & 28672) >> 12;
+			rs1 = (instruction & 1015808) >> 15;
+			rs2 = (instruction & 32505856) >> 20;
+			uint32_t imm = (instruction & 4261412864) >> 25;
+			S_PRINT(imm2, funct3, rs1, rs2, imm);
+			//printf("imm[11:5]: %d\n rs2: %d\n rs1: %d\n funct3: %d\n imm[4:0]: %d\n opcode: %d\n",imm,rs2,rs1,funct3,imm2,opcode);
+			break;
+		case(3): //I-type 5808) >> 15;
+			rd = (instruction & 3968) >> 7;
+			uint32_t funct3 = (instruction & 28672) >> 12;
+			rs1 = (instruction & 1015808) >> 15;
+			uint32_t imm = (instruction & 4293918720) >> 20;
+			I_PRINT(imm, funct3, rs1, rd);
+			//printf("imm: %d\n rs1: %d\n funct3: %d\n rd: %d\n opcode: %d\n",imm,rs1,funct3,rd,opcode);
+			break;
+		default:
 			printf("instruction print not yet created\n");
-		}
-		CURRENT_STATE = NEXT_STATE;
-	return;
-}
+	}			printf("Invalid instruction");
+
 
 /***************************************************************/
 /* main                                                                                                                                   */
