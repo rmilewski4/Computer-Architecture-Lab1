@@ -443,7 +443,20 @@ void S_Processing(uint32_t imm4, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32
 		break;
 	}
 }
+void ECall_Processing() {
+	//Need to read register 17 to discover operation
+	uint32_t a2 = CURRENT_STATE.REGS[17];
+	switch(a2) {
+		//exit
+		case 10:
+			RUN_FLAG = FALSE;
+			break;
 
+		default:
+			printf("Invalid ECall!");
+			break;
+	}
+}
 void B_Processing() {
 	// hi
 }
@@ -459,24 +472,73 @@ void U_Processing() {
 /************************************************************/
 /* decode and execute instruction                                                                     */ 
 /************************************************************/
+//TODO: Need to add a SYSCALL instruction to the input.txt and actually implement the SYSCALL to end the program (see the lab pdf for info)
+//Verify output of handle_instruction is correct, implement the print program.
 void handle_instruction()
 {
-	//test
 	/*IMPLEMENT THIS*/
 	/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
-	
-	//opcode has 7 bits (0-6)
-	//rd has 5 bits (7-11)
-	//func3 has 3 bits(12 - 14)
-	//rs1 has 5 bits (15 - 19)
-	//rs2 has 5 bits (20 - 24)
-	//func7 has 7 bits (25 - 31)
-
-
+	//Get instruction by reading current PC
 	uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
-	
-	//uint32_t opcode = instruction & 51;
-	//printf("%x\n",opcode);
+	printf("%x\n",instruction);
+		uint32_t rd = 0;
+		uint32_t funct3 = 0;
+		uint32_t rs1 = 0;
+		uint32_t rs2 = 0;
+		uint32_t funct7 = 0;
+		uint32_t imm = 0;
+		uint32_t imm2 = 0;
+	//127 in base-10 is = 1111111 in base 2, which will allow us to extract the opcode from the instruction
+	uint32_t opcode = instruction & 127;
+	switch(opcode) {
+		//R-type instructions
+		case(51):
+			rd = (instruction & 3968) >> 7;
+			funct3 = (instruction & 28672) >> 12;
+			rs1 = (instruction & 1015808) >> 15;
+			rs2 = (instruction & 32505856) >> 20;
+			funct7 = (instruction & 4261412864) >> 25;
+	 		printf("funct7: %d\n rs2: %d\n rs1: %d\n funct3: %d\n rd: %d\n opcode: %d\n",funct7,rs2,rs1,funct3,rd,opcode);
+			R_Processing(rd,funct3,rs1,rs2,funct7);
+			break;
+		//I-type Instructions
+		case(19):
+			rd = (instruction & 3968) >> 7;
+			funct3 = (instruction & 28672) >> 12;
+			rs1 = (instruction & 1015808) >> 15;
+			imm = (instruction & 4293918720) >> 20;
+	 		printf("imm: %d\n rs1: %d\n funct3: %d\n rd: %d\n opcode: %d\n",imm,rs1,funct3,rd,opcode);
+			Iimm_Processing(rd,funct3,rs1,imm);
+			break;
+		//I-type load instructions
+		case(3):
+			rd = (instruction & 3968) >> 7;
+			funct3 = (instruction & 28672) >> 12;
+			rs1 = (instruction & 1015808) >> 15;
+			imm = (instruction & 4293918720) >> 20;
+	 		printf("imm: %d\n rs1: %d\n funct3: %d\n rd: %d\n opcode: %d\n",imm,rs1,funct3,rd,opcode);
+			ILoad_Processing(rd,funct3,rs1,imm);
+			break;
+		//S-type instructions
+		case(35):
+			imm2 = (instruction & 3968) >> 7;
+			funct3 = (instruction & 28672) >> 12;
+			rs1 = (instruction & 1015808) >> 15;
+			rs2 = (instruction & 32505856) >> 20;
+			imm = (instruction & 4261412864) >> 25;
+	 		printf("imm[11:5]: %d\n rs2: %d\n rs1: %d\n funct3: %d\n imm[4:0]: %d\n opcode: %d\n",imm,rs2,rs1,funct3,imm2,opcode);
+			S_Processing(imm2,funct3,rs1,rs2,imm);
+			break;
+		//SYSCALL/ECall opcode
+		case(115):
+			ECall_Processing();
+			break;
+		default:
+			printf("OPCODE NOT FOUND!\n\n");
+			break;
+	}
+	//Updates program counter, each instruction is 4 bytes.
+	NEXT_STATE.PC += 4;
 }
 
 
@@ -494,13 +556,29 @@ void initialize() {
 /************************************************************/
 /* Print the program loaded into memory (in RISCV assembly format)    */ 
 /************************************************************/
+/*IMPLEMENT THIS*/
+/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
 void print_program(){
+	CURRENT_STATE.PC = MEM_TEXT_BEGIN;
+	NEXT_STATE.PC = MEM_TEXT_BEGIN;
 
-	/*IMPLEMENT THIS*/
-	/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
+	uint32_t addressMemory;
+	for(int i = 0; i < INSTRUCTION_COUNT; i++){
+		addressMemory = CURRENT_STATE.PC;
+		
+		printf("Registers after executing instruction %d:\n", i + 1);
+		print_instruction(addressMemory);
+		
+		NEXT_STATE.PC += 4;
+	}
+		
 }
 
+	
+
 void R_Print(uint32_t rd, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32_t f7) {
+
+	printf("rd is %d, f3 is %d, rs1 is %d, rs2 is %d, f7 is %d\n\n", rd, f3, rs1, rs2, f7);
 
 }
 
