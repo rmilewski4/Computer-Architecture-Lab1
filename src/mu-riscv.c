@@ -472,15 +472,13 @@ void U_Processing() {
 /************************************************************/
 /* decode and execute instruction                                                                     */ 
 /************************************************************/
-//TODO: Need to add a SYSCALL instruction to the input.txt and actually implement the SYSCALL to end the program (see the lab pdf for info)
-//Verify output of handle_instruction is correct, implement the print program.
+
 void handle_instruction()
 {
 	/*IMPLEMENT THIS*/
 	/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
 	//Get instruction by reading current PC
 	uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
-	printf("%x\n",instruction);
 		uint32_t rd = 0;
 		uint32_t funct3 = 0;
 		uint32_t rs1 = 0;
@@ -498,7 +496,6 @@ void handle_instruction()
 			rs1 = (instruction & 1015808) >> 15;
 			rs2 = (instruction & 32505856) >> 20;
 			funct7 = (instruction & 4261412864) >> 25;
-	 		printf("funct7: %d\n rs2: %d\n rs1: %d\n funct3: %d\n rd: %d\n opcode: %d\n",funct7,rs2,rs1,funct3,rd,opcode);
 			R_Processing(rd,funct3,rs1,rs2,funct7);
 			break;
 		//I-type Instructions
@@ -507,7 +504,6 @@ void handle_instruction()
 			funct3 = (instruction & 28672) >> 12;
 			rs1 = (instruction & 1015808) >> 15;
 			imm = (instruction & 4293918720) >> 20;
-	 		printf("imm: %d\n rs1: %d\n funct3: %d\n rd: %d\n opcode: %d\n",imm,rs1,funct3,rd,opcode);
 			Iimm_Processing(rd,funct3,rs1,imm);
 			break;
 		//I-type load instructions
@@ -516,7 +512,6 @@ void handle_instruction()
 			funct3 = (instruction & 28672) >> 12;
 			rs1 = (instruction & 1015808) >> 15;
 			imm = (instruction & 4293918720) >> 20;
-	 		printf("imm: %d\n rs1: %d\n funct3: %d\n rd: %d\n opcode: %d\n",imm,rs1,funct3,rd,opcode);
 			ILoad_Processing(rd,funct3,rs1,imm);
 			break;
 		//S-type instructions
@@ -526,7 +521,6 @@ void handle_instruction()
 			rs1 = (instruction & 1015808) >> 15;
 			rs2 = (instruction & 32505856) >> 20;
 			imm = (instruction & 4261412864) >> 25;
-	 		printf("imm[11:5]: %d\n rs2: %d\n rs1: %d\n funct3: %d\n imm[4:0]: %d\n opcode: %d\n",imm,rs2,rs1,funct3,imm2,opcode);
 			S_Processing(imm2,funct3,rs1,rs2,imm);
 			break;
 		//SYSCALL/ECall opcode
