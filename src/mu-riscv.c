@@ -429,7 +429,8 @@ void S_Processing(uint32_t imm4, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32
 		mem_write_32((NEXT_STATE.REGS[rs1] + imm), NEXT_STATE.REGS[rs2]);
 		break;
 	
-	case 1: //sh			ILoad_Processing(rd,funct3,rs1,imm);mm), NEXT_STATE.REGS[rs2]);
+	case 1: //sh
+		mem_write_32((NEXT_STATE.REGS[rs1] + imm), NEXT_STATE.REGS[rs2]);
 		break;
 
 	case 2: //sw
@@ -471,15 +472,13 @@ void U_Processing() {
 /************************************************************/
 /* decode and execute instruction                                                                     */ 
 /************************************************************/
-//TODO: Need to add a SYSCALL instruction to the input.txt and actually implement the SYSCALL to end the program (see the lab pdf for info)
-//Verify output of handle_instruction is correct, implement the print program.
+
 void handle_instruction()
 {
 	/*IMPLEMENT THIS*/
 	/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
 	//Get instruction by reading current PC
 	uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
-	printf("%x\n",instruction);
 		uint32_t rd = 0;
 		uint32_t funct3 = 0;
 		uint32_t rs1 = 0;
@@ -497,7 +496,6 @@ void handle_instruction()
 			rs1 = (instruction & 1015808) >> 15;
 			rs2 = (instruction & 32505856) >> 20;
 			funct7 = (instruction & 4261412864) >> 25;
-	 		printf("funct7: %d\n rs2: %d\n rs1: %d\n funct3: %d\n rd: %d\n opcode: %d\n",funct7,rs2,rs1,funct3,rd,opcode);
 			R_Processing(rd,funct3,rs1,rs2,funct7);
 			break;
 		//I-type Instructions
@@ -506,7 +504,6 @@ void handle_instruction()
 			funct3 = (instruction & 28672) >> 12;
 			rs1 = (instruction & 1015808) >> 15;
 			imm = (instruction & 4293918720) >> 20;
-	 		printf("imm: %d\n rs1: %d\n funct3: %d\n rd: %d\n opcode: %d\n",imm,rs1,funct3,rd,opcode);
 			Iimm_Processing(rd,funct3,rs1,imm);
 			break;
 		//I-type load instructions
@@ -515,7 +512,6 @@ void handle_instruction()
 			funct3 = (instruction & 28672) >> 12;
 			rs1 = (instruction & 1015808) >> 15;
 			imm = (instruction & 4293918720) >> 20;
-	 		printf("imm: %d\n rs1: %d\n funct3: %d\n rd: %d\n opcode: %d\n",imm,rs1,funct3,rd,opcode);
 			ILoad_Processing(rd,funct3,rs1,imm);
 			break;
 		//S-type instructions
@@ -525,7 +521,6 @@ void handle_instruction()
 			rs1 = (instruction & 1015808) >> 15;
 			rs2 = (instruction & 32505856) >> 20;
 			imm = (instruction & 4261412864) >> 25;
-	 		printf("imm[11:5]: %d\n rs2: %d\n rs1: %d\n funct3: %d\n imm[4:0]: %d\n opcode: %d\n",imm,rs2,rs1,funct3,imm2,opcode);
 			S_Processing(imm2,funct3,rs1,rs2,imm);
 			break;
 		//SYSCALL/ECall opcode
@@ -534,12 +529,6 @@ void handle_instruction()
 			break;
 		default:
 			printf("OPCODE NOT FOUND!\n\n");
-			break;rd = (instruction & 3968) >> 7;
-			funct3 = (instruction & 28672) >> 12;
-			rs1 = (instruction & 1015808) >> 15;
-			imm = (instruction & 4293918720) >> 20;
-	 		printf("imm: %d\n rs1: %d\n funct3: %d\n rd: %d\n opcode: %d\n",imm,rs1,funct3,rd,opcode);
-			ILoad_Processing(rd,funct3,rs1,imm);
 			break;
 	}
 	//Updates program counter, each instruction is 4 bytes.
@@ -561,8 +550,6 @@ void initialize() {
 /************************************************************/
 /* Print the program loaded into memory (in RISCV assembly format)    */ 
 /************************************************************/
-/*IMPLEMENT THIS*/
-/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
 void print_program(){
 	CURRENT_STATE.PC = MEM_TEXT_BEGIN;
 	NEXT_STATE.PC = MEM_TEXT_BEGIN + 4;
@@ -582,16 +569,41 @@ void print_program(){
 	}
 }
 
-	
+void R_Print(uint32_t rd, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32_t f7) {
+	switch(f3){
+		case 0:
+			switch(f7){
+				case 0:		//add
+					printf("add x%d, x%d, x%d\n\n", rd, rs1, rs2);
+					break;
+				case 32:	//sub
+					printf("sub x%d, x%d, x%d\n\n", rd, rs1, rs2);
+					break;
+				default:
+					RUN_FLAG = FALSE;
+					break;
+				}	
+			break;
+		case 6: 			//or
+			printf("or x%d, x%d, x%d\n\n", rd, rs1, rs2);
+			break;
+		case 7:				//and
+			printf("and x%d, x%d, x%d\n\n", rd, rs1, rs2);
+			break;
+		default:
+			RUN_FLAG = FALSE;
+			break;
+	}
 
-void S_PRINT(uint32_t imm11, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32_t imm4){
+}
+
+void S_Print(uint32_t imm11, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32_t imm4){
 	uint32_t imm = (imm4<< 5) + imm11;
 
 	switch (f3)
 		{
 		case 0: //sb
 			printf("sb %d(x%d), x%d\n", imm, rs1, rs2);
-			//mem_write_32((NEXT_STATE.REGS[rs1] + imm), NEXT_STATE.REGS[rs2]);
 			break;
 		
 		case 1: //sh		
@@ -600,7 +612,6 @@ void S_PRINT(uint32_t imm11, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32_t i
 
 		case 2: //sw
 			printf("sw %d(x%d), x%d\n", imm, rs1, rs2);
-			//mem_write_32((NEXT_STATE.REGS[rs1] + imm), NEXT_STATE.REGS[rs2]);
 			break;
 
 		default:
@@ -611,26 +622,87 @@ void S_PRINT(uint32_t imm11, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32_t i
 
 }
 
-void I_PRINT(uint32_t imm, uint32_t f3, uint32_t rs1, uint32_t rd){
-	switch (f3){
-		case 0: //lb
-			printf("lb x%d, %d(x%d)\n", rd, imm, rs1);
-			//NEXT_STATE.REGS[rd] = byte_to_word((mem_read_32(NEXT_STATE.REGS[rs1] + imm)) & 0xFF);
-			break;
+void I_Print(uint32_t imm, uint32_t f3, uint32_t rs1, uint32_t rd){
+	switch (f3)
+	{
+	case 0: //lb
+		printf("lb x%d, %d(x%d)\n\n", rd, imm, rs1);
+		break;
 
-		case 1: //lhS_PRINT(imm2, funct3, rs1, rs2, imm);
-			printf("lw x%d, %d(x%d)\n", rd, imm, rs1);
-			//NEXT_STATE.REGS[rd] = mem_read_32(NEXT_STATE.REGS[rs1] + imm);
-			break;
+	case 1: //lh
+		printf("lh x%d, %d(x%d)\n\n", rd, imm, rs1);
 		
-		default:
-			printf("Invalid instruction");
-			RUN_FLAG = FALSE;
-			break;
+		break;
+
+	case 2: //lw
+		printf("lw x%d, %d(x%d)\n\n", rd, imm, rs1);
+		break;
+	
+	default:
+		printf("Invalid instruction");
+		RUN_FLAG = FALSE;
+		break;
 	}
 }
 
-void Iimm_PRINT(){
+void Iimm_Print(uint32_t rd, uint32_t f3, uint32_t rs1, uint32_t imm){
+	uint32_t imm0_4 = (imm << 7) >> 7;
+	uint32_t imm5_11 = imm >> 5;
+	switch (f3)
+	{
+	case 0: //addi
+		printf("addi x%d, %d", rs1, imm);
+		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] + imm;
+		break;
+
+	case 4: //xori
+		printf("xori x%d, %d", rs1, imm);
+		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] ^ imm;
+		break;
+	
+	case 6: //ori
+		printf("ori x%d, %d", rs1, imm);
+		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] | imm;
+		break;
+	
+	case 7: //andi
+		printf("andi x%d, %d", rs1, imm);
+		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] & imm;
+		break;
+	
+	case 1: //slli
+		printf("slli x%d, x%d, %d", rd, rs1, imm0_4); 
+		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] << imm0_4;
+		break;
+	
+	case 5: //srli and srai
+		switch (imm5_11)
+		{
+		case 0: //srli
+			printf("srli x%d, x%d, %d", rd, rs1, imm0_4); 
+			break;
+
+		case 32: //srai
+			printf("srai x%d, x%d, %d", rd, rs1, imm0_4); 
+			break;
+		
+		default:
+			RUN_FLAG = FALSE;
+			break;
+		}
+		break;
+	
+	case 2:
+		break;
+
+	case 3:
+		break;
+
+	default:
+		printf("Invalid instruction");
+		RUN_FLAG = FALSE;
+		break;
+	}
 
 }
 
@@ -643,46 +715,48 @@ void print_instruction(uint32_t addr){
 	uint32_t instruction = mem_read_32(addr);
 	uint32_t maskopcode = 0x7F;
 	uint32_t opcode = instruction & maskopcode;
-	switch(opcode){
-		case(51): //R-type
-			uint32_t maskrd = 0xF80;
-			uint32_t rd = instruction & maskrd;
-			rd = rd >> 7;
-			uint32_t maskf3 = 0x7000;
-			uint32_t f3 = instruction & maskf3;
-			f3 = f3 >> 12;
-			uint32_t maskrs1 = 0xF8000;
-			uint32_t rs1 = instruction & maskrs1;
-			rs1 = rs1 >> 15;
-			uint32_t maskrs2 = 0x1F00000;
-			uint32_t rs2 = instruction & maskrs2;
-			rs2 = rs2 >> 20;
-			uint32_t maskf7 = 0xFE000000;
-			uint32_t f7 = instruction & maskf7;
-			f7 = f7 >> 25;
-			R_Print(rd,f3,rs1,rs2,f7);
-			break;
-		case(35): //S-type
-			uint32_t imm2 = (instruction & 3968) >> 7;
-			uint32_t funct3 = (instruction & 28672) >> 12;
-			rs1 = (instruction & 1015808) >> 15;
-			rs2 = (instruction & 32505856) >> 20;
-			uint32_t imm = (instruction & 4261412864) >> 25;
-			S_PRINT(imm2, funct3, rs1, rs2, imm);
-			//printf("imm[11:5]: %d\n rs2: %d\n rs1: %d\n funct3: %d\n imm[4:0]: %d\n opcode: %d\n",imm,rs2,rs1,funct3,imm2,opcode);
-			break;
-		case(3): //I-type 5808) >> 15;
-			rd = (instruction & 3968) >> 7;
-			uint32_t funct3 = (instruction & 28672) >> 12;
-			rs1 = (instruction & 1015808) >> 15;
-			uint32_t imm = (instruction & 4293918720) >> 20;
-			I_PRINT(imm, funct3, rs1, rd);
-			//printf("imm: %d\n rs1: %d\n funct3: %d\n rd: %d\n opcode: %d\n",imm,rs1,funct3,rd,opcode);
-			break;
-		default:
-			printf("instruction print not yet created\n");
-	}			printf("Invalid instruction");
-
+	if(opcode == 51) { //R-type
+		uint32_t maskrd = 0xF80;
+		uint32_t rd = instruction & maskrd;
+		rd = rd >> 7;
+		uint32_t maskf3 = 0x7000;
+		uint32_t f3 = instruction & maskf3;
+		f3 = f3 >> 12;
+		uint32_t maskrs1 = 0xF8000;
+		uint32_t rs1 = instruction & maskrs1;
+		rs1 = rs1 >> 15;
+		uint32_t maskrs2 = 0x1F00000;
+		uint32_t rs2 = instruction & maskrs2;
+		rs2 = rs2 >> 20;
+		uint32_t maskf7 = 0xFE000000;
+		uint32_t f7 = instruction & maskf7;
+		f7 = f7 >> 25;
+		R_Print(rd,f3,rs1,rs2,f7);
+	} else if(opcode == 3) { // I-type load
+		uint32_t rd = (instruction & 3968) >> 7;
+		uint32_t funct3 = (instruction & 28672) >> 12;
+		uint32_t rs1 = (instruction & 1015808) >> 15;
+		uint32_t imm = (instruction & 4293918720) >> 20;
+		I_Print(imm, funct3, rs1, rd);
+	} else if(opcode == 19){ //I-type 
+		uint32_t rd = (instruction & 3968) >> 7;
+		uint32_t funct3 = (instruction & 28672) >> 12;
+		uint32_t rs1 = (instruction & 1015808) >> 15;
+		uint32_t imm = (instruction & 4293918720) >> 20;
+		Iimm_Print(rd, funct3, rs1, imm);
+	} else if(opcode == 35){ //S-type
+		uint32_t imm = (instruction & 3968) >> 7;
+		uint32_t funct3 = (instruction & 28672) >> 12;
+		uint32_t rs1 = (instruction & 1015808) >> 15;
+		uint32_t rs2 = (instruction & 32505856) >> 20;
+		uint32_t imm2 = (instruction & 4261412864) >> 25;
+		S_Print(imm2, funct3, rs1, rs2, imm);
+	} else{
+		printf("instruction print not yet created\n");
+	}
+	CURRENT_STATE = NEXT_STATE;
+	return;
+}
 
 /***************************************************************/
 /* main                                                                                                                                   */
