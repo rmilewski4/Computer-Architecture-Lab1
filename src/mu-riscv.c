@@ -551,11 +551,158 @@ void initialize() {
 /* Print the program loaded into memory (in RISCV assembly format)    */ 
 /************************************************************/
 void print_program(){
-	/*IMPLEMENT THIS*/
-	/* execute one instruction at a time. Use/update CURRENT_STATE and and NEXT_STATE, as necessary.*/
+	CURRENT_STATE.PC = MEM_TEXT_BEGIN;
+	NEXT_STATE.PC = MEM_TEXT_BEGIN + 4;
+	
+
+	uint32_t addressMemory;
+	int i = 0;
+	while(i < INSTRUCTION_COUNT){
+		addressMemory = CURRENT_STATE.PC;
+		
+		
+		printf("Instruction %d:\n", i + 1);
+		print_instruction(addressMemory);
+		
+		NEXT_STATE.PC += 4;
+		i++;
+	}
 }
 
 void R_Print(uint32_t rd, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32_t f7) {
+	switch(f3){
+		case 0:
+			switch(f7){
+				case 0:		//add
+					printf("add x%d, x%d, x%d\n\n", rd, rs1, rs2);
+					break;
+				case 32:	//sub
+					printf("sub x%d, x%d, x%d\n\n", rd, rs1, rs2);
+					break;
+				default:
+					RUN_FLAG = FALSE;
+					break;
+				}	
+			break;
+		case 6: 			//or
+			printf("or x%d, x%d, x%d\n\n", rd, rs1, rs2);
+			break;
+		case 7:				//and
+			printf("and x%d, x%d, x%d\n\n", rd, rs1, rs2);
+			break;
+		default:
+			RUN_FLAG = FALSE;
+			break;
+	}
+
+}
+
+void S_Print(uint32_t imm11, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32_t imm4){
+	uint32_t imm = (imm4<< 5) + imm11;
+
+	switch (f3)
+		{
+		case 0: //sb
+			printf("sb %d(x%d), x%d\n", imm, rs1, rs2);
+			break;
+		
+		case 1: //sh		
+			printf("sh %d(x%d), x%d\n", imm, rs1, rs2);
+			break;
+
+		case 2: //sw
+			printf("sw %d(x%d), x%d\n", imm, rs1, rs2);
+			break;
+
+		default:
+			RUN_FLAG = FALSE;
+			break;
+	}
+	
+
+}
+
+void I_Print(uint32_t imm, uint32_t f3, uint32_t rs1, uint32_t rd){
+	switch (f3)
+	{
+	case 0: //lb
+		printf("lb x%d, %d(x%d)\n\n", rd, imm, rs1);
+		break;
+
+	case 1: //lh
+		printf("lh x%d, %d(x%d)\n\n", rd, imm, rs1);
+		
+		break;
+
+	case 2: //lw
+		printf("lw x%d, %d(x%d)\n\n", rd, imm, rs1);
+		break;
+	
+	default:
+		printf("Invalid instruction");
+		RUN_FLAG = FALSE;
+		break;
+	}
+}
+
+void Iimm_Print(uint32_t rd, uint32_t f3, uint32_t rs1, uint32_t imm){
+	uint32_t imm0_4 = (imm << 7) >> 7;
+	uint32_t imm5_11 = imm >> 5;
+	switch (f3)
+	{
+	case 0: //addi
+		printf("addi x%d, %d", rs1, imm);
+		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] + imm;
+		break;
+
+	case 4: //xori
+		printf("xori x%d, %d", rs1, imm);
+		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] ^ imm;
+		break;
+	
+	case 6: //ori
+		printf("ori x%d, %d", rs1, imm);
+		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] | imm;
+		break;
+	
+	case 7: //andi
+		printf("andi x%d, %d", rs1, imm);
+		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] & imm;
+		break;
+	
+	case 1: //slli
+		printf("slli x%d, x%d, %d", rd, rs1, imm0_4); 
+		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] << imm0_4;
+		break;
+	
+	case 5: //srli and srai
+		switch (imm5_11)
+		{
+		case 0: //srli
+			printf("srli x%d, x%d, %d", rd, rs1, imm0_4); 
+			break;
+
+		case 32: //srai
+			printf("srai x%d, x%d, %d", rd, rs1, imm0_4); 
+			break;
+		
+		default:
+			RUN_FLAG = FALSE;
+			break;
+		}
+		break;
+	
+	case 2:
+		break;
+
+	case 3:
+		break;
+
+	default:
+		printf("Invalid instruction");
+		RUN_FLAG = FALSE;
+		break;
+	}
 
 }
 
@@ -566,29 +713,48 @@ void R_Print(uint32_t rd, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32_t f7) 
 void print_instruction(uint32_t addr){
 
 	uint32_t instruction = mem_read_32(addr);
-		uint32_t maskopcode = 0x7F;
-		uint32_t opcode = instruction & maskopcode;
-		if(opcode == 51) { //R-type
-			uint32_t maskrd = 0xF80;
-			uint32_t rd = instruction & maskrd;
-			rd = rd >> 7;
-			uint32_t maskf3 = 0x7000;
-			uint32_t f3 = instruction & maskf3;
-			f3 = f3 >> 12;
-			uint32_t maskrs1 = 0xF8000;
-			uint32_t rs1 = instruction & maskrs1;
-			rs1 = rs1 >> 15;
-			uint32_t maskrs2 = 0x1F00000;
-			uint32_t rs2 = instruction & maskrs2;
-			rs2 = rs2 >> 20;
-			uint32_t maskf7 = 0xFE000000;
-			uint32_t f7 = instruction & maskf7;
-			f7 = f7 >> 25;
-			R_Print(rd,f3,rs1,rs2,f7);
-		} else {
-			printf("instruction print not yet created\n");
-		}
-		CURRENT_STATE = NEXT_STATE;
+	uint32_t maskopcode = 0x7F;
+	uint32_t opcode = instruction & maskopcode;
+	if(opcode == 51) { //R-type
+		uint32_t maskrd = 0xF80;
+		uint32_t rd = instruction & maskrd;
+		rd = rd >> 7;
+		uint32_t maskf3 = 0x7000;
+		uint32_t f3 = instruction & maskf3;
+		f3 = f3 >> 12;
+		uint32_t maskrs1 = 0xF8000;
+		uint32_t rs1 = instruction & maskrs1;
+		rs1 = rs1 >> 15;
+		uint32_t maskrs2 = 0x1F00000;
+		uint32_t rs2 = instruction & maskrs2;
+		rs2 = rs2 >> 20;
+		uint32_t maskf7 = 0xFE000000;
+		uint32_t f7 = instruction & maskf7;
+		f7 = f7 >> 25;
+		R_Print(rd,f3,rs1,rs2,f7);
+	} else if(opcode == 3) { // I-type load
+		uint32_t rd = (instruction & 3968) >> 7;
+		uint32_t funct3 = (instruction & 28672) >> 12;
+		uint32_t rs1 = (instruction & 1015808) >> 15;
+		uint32_t imm = (instruction & 4293918720) >> 20;
+		I_Print(imm, funct3, rs1, rd);
+	} else if(opcode == 19){ //I-type 
+		uint32_t rd = (instruction & 3968) >> 7;
+		uint32_t funct3 = (instruction & 28672) >> 12;
+		uint32_t rs1 = (instruction & 1015808) >> 15;
+		uint32_t imm = (instruction & 4293918720) >> 20;
+		Iimm_Print(rd, funct3, rs1, imm);
+	} else if(opcode == 35){ //S-type
+		uint32_t imm = (instruction & 3968) >> 7;
+		uint32_t funct3 = (instruction & 28672) >> 12;
+		uint32_t rs1 = (instruction & 1015808) >> 15;
+		uint32_t rs2 = (instruction & 32505856) >> 20;
+		uint32_t imm2 = (instruction & 4261412864) >> 25;
+		S_Print(imm2, funct3, rs1, rs2, imm);
+	} else{
+		printf("instruction print not yet created\n");
+	}
+	CURRENT_STATE = NEXT_STATE;
 	return;
 }
 
