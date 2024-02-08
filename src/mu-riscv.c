@@ -554,14 +554,13 @@ void print_program(){
 	CURRENT_STATE.PC = MEM_TEXT_BEGIN;
 	NEXT_STATE.PC = MEM_TEXT_BEGIN + 4;
 	
-
 	uint32_t addressMemory;
 	int i = 0;
-	while(i < INSTRUCTION_COUNT){
+	printf("i=%d, ic = %d\n", i, INSTRUCTION_COUNT);
+	while(RUN_FLAG == TRUE){
 		addressMemory = CURRENT_STATE.PC;
+		printf("%x\n",addressMemory);
 		
-		
-		printf("Instruction %d:\n", i + 1);
 		print_instruction(addressMemory);
 		
 		NEXT_STATE.PC += 4;
@@ -603,15 +602,15 @@ void S_Print(uint32_t imm11, uint32_t f3, uint32_t rs1, uint32_t rs2, uint32_t i
 	switch (f3)
 		{
 		case 0: //sb
-			printf("sb %d(x%d), x%d\n", imm, rs1, rs2);
+			printf("sb x%d, %d(x%d)\n\n", rs1, imm, rs2);
 			break;
 		
 		case 1: //sh		
-			printf("sh %d(x%d), x%d\n", imm, rs1, rs2);
+			printf("sh x%d, %d(x%d)\n\n", rs1, imm, rs2);
 			break;
 
 		case 2: //sw
-			printf("sw %d(x%d), x%d\n", imm, rs1, rs2);
+			printf("sw x%d, %d(x%d)\n\n", rs1, imm, rs2);
 			break;
 
 		default:
@@ -651,39 +650,34 @@ void Iimm_Print(uint32_t rd, uint32_t f3, uint32_t rs1, uint32_t imm){
 	switch (f3)
 	{
 	case 0: //addi
-		printf("addi x%d, %d", rs1, imm);
-		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] + imm;
+		printf("addi x%d, x%d, %d\n\n", rd, rs1, imm);
 		break;
 
 	case 4: //xori
-		printf("xori x%d, %d", rs1, imm);
-		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] ^ imm;
+		printf("xori x%d, x%d, %d\n\n", rd, rs1, imm);
 		break;
 	
 	case 6: //ori
-		printf("ori x%d, %d", rs1, imm);
-		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] | imm;
+		printf("ori x%d, x%d, %d\n\n", rd, rs1, imm);
 		break;
 	
 	case 7: //andi
-		printf("andi x%d, %d", rs1, imm);
-		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] & imm;
+		printf("andi x%d, x%d, %d\n\n", rd, rs1, imm);
 		break;
 	
 	case 1: //slli
-		printf("slli x%d, x%d, %d", rd, rs1, imm0_4); 
-		//NEXT_STATE.REGS[rd] = NEXT_STATE.REGS[rs1] << imm0_4;
+		printf("slli x%d, x%d, %d\n\n", rd, rs1, imm0_4); 
 		break;
 	
 	case 5: //srli and srai
 		switch (imm5_11)
 		{
 		case 0: //srli
-			printf("srli x%d, x%d, %d", rd, rs1, imm0_4); 
+			printf("srli x%d, x%d, %d\n\n", rd, rs1, imm0_4); 
 			break;
 
 		case 32: //srai
-			printf("srai x%d, x%d, %d", rd, rs1, imm0_4); 
+			printf("srai x%d, x%d, %d\n\n", rd, rs1, imm0_4); 
 			break;
 		
 		default:
@@ -704,8 +698,24 @@ void Iimm_Print(uint32_t rd, uint32_t f3, uint32_t rs1, uint32_t imm){
 		break;
 	}
 
-}
+}\
+//TODO: Finish this, gonna need to actually implement changing the registers at least for this to work. might be a better solution
+void ECall_Print() {
+	//Need to read register 17 to discover operation
+	uint32_t a2 = CURRENT_STATE.REGS[17];
+	switch(a2) {
+		//exit
+		case 10:
+			printf("ecall\n\n");
+			printf("STOP PROGRAM\n");
+			RUN_FLAG = FALSE;
+			break;
 
+		default:
+			printf("Invalid ECall!");
+			break;
+	}
+}
 
 /************************************************************/
 /* Print the instruction at given memory address (in RISCV assembly format)    */
@@ -753,6 +763,7 @@ void print_instruction(uint32_t addr){
 		S_Print(imm2, funct3, rs1, rs2, imm);
 	} else{
 		printf("instruction print not yet created\n");
+		RUN_FLAG = FALSE;
 	}
 	CURRENT_STATE = NEXT_STATE;
 	return;
