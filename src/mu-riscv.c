@@ -558,7 +558,6 @@ void print_program(){
 	int i = 0;
 	while(RUN_FLAG == TRUE){
 		addressMemory = CURRENT_STATE.PC;
-		printf("%x\n",addressMemory);
 		
 		print_instruction(addressMemory);
 		
