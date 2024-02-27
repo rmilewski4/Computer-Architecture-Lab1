@@ -457,8 +457,8 @@ void ECall_Processing() {
 			break;
 	}
 }
-void B_Processing(uint32_t imm12and10_5, uint32_t funct3, uint32_t rs1, uint32_t rs2, uint32_t imm4_1and11) {
-	uint32_t imm = (imm12and10_5 & 64) << 5 | (imm4_1and11 & 1) << 10 | (imm12and10_5 & 63) << 4 | (imm4_1and11 & 30) >> 1;
+void B_Processing(int32_t imm12and10_5, uint32_t funct3, uint32_t rs1, uint32_t rs2, int32_t imm4_1and11) {
+	int32_t imm = (imm12and10_5 & 64) << 5 | (imm4_1and11 & 1) << 10 | (imm12and10_5 & 63) << 4 | (imm4_1and11 & 30) >> 1;
 	
 	switch(funct3) {
 		case 0: //beq
@@ -496,14 +496,11 @@ void B_Processing(uint32_t imm12and10_5, uint32_t funct3, uint32_t rs1, uint32_t
 				NEXT_STATE.PC += imm;
 				break;
 			}
-		
 
 		default:
 			printf("Invalid instruction");
 			RUN_FLAG = FALSE;
 			break;
-		
-			
 	}
 	
 }
@@ -572,17 +569,15 @@ void handle_instruction()
 			break;
 		//B-type instructions
 		case(99):{
-			uint32_t imm11 = (instruction & 1);
-
-			uint32_t imm4_1 = (instruction & 30) >> 1;
-			uint32_t funct3 = (instruction & 28672) >> 12;
-			uint32_t rs1 = (instruction & 1015808) >> 15;
-			uint32_t rs2 = (instruction & 32505856) >> 20;
-			uint32_t imm10_5 = (instruction & 2113929216) >> 26;
-			uint32_t imm12 = (instruction & 2147483648) >> 30;
-		
-			uint32_t imm4_1and11 = imm4_1 | imm11;
-			uint32_t imm12and10_5 = imm12 | imm10_5;
+			long long int imm11 = (instruction & 1);
+			long long int imm4_1 = (instruction & 30) >> 1;
+			funct3 = (instruction & 28672) >> 12;
+			rs1 = (instruction & 1015808) >> 15;
+			rs2 = (instruction & 32505856) >> 20;
+			int32_t imm10_5 = (instruction & 2113929216) >> 26;
+			int32_t imm12 = (instruction & 2147483648) >> 30;
+			int32_t imm4_1and11 = imm4_1 | imm11;
+			int32_t imm12and10_5 = imm12 | imm10_5;
 			B_Processing(imm12and10_5, funct3, rs1, rs2, imm4_1and11);
 			break;
 		}
@@ -761,8 +756,7 @@ void Iimm_Print(uint32_t rd, uint32_t f3, uint32_t rs1, uint32_t imm){
 
 }
 
-void B_Print(uint32_t imm12and10_5, uint32_t funct3, uint32_t rs1, uint32_t rs2, uint32_t imm4_1and11){
-	uint32_t imm = (imm12and10_5 & 64) << 5 | (imm4_1and11 & 1) << 10 | (imm12and10_5 & 63) << 4 | (imm4_1and11 & 30) >> 1;
+void B_Print(int32_t imm, uint32_t funct3, uint32_t rs1, uint32_t rs2){
 	switch(funct3) {
 		case 0: //beq
 			printf("beq x%d, x%d, %d\n\n", rs1, rs2, imm);
@@ -841,18 +835,19 @@ void print_instruction(uint32_t addr){
 		uint32_t imm2 = (instruction & 4261412864) >> 25;
 		S_Print(imm2, funct3, rs1, rs2, imm);
 	}  else if(opcode == 99){
-
-		uint32_t imm11 = (instruction & 1);
-		uint32_t imm4_1 = (instruction & 30) >> 1;
+		
 		uint32_t funct3 = (instruction & 28672) >> 12;
 		uint32_t rs1 = (instruction & 1015808) >> 15;
 		uint32_t rs2 = (instruction & 32505856) >> 20;
-		uint32_t imm10_5 = (instruction & 2113929216) >> 26;
-		uint32_t imm12 = (instruction & 2147483648) >> 30;
-		
-		uint32_t imm4_1and11 = imm4_1 | imm11;
-		uint32_t imm12and10_5 = imm12 | imm10_5;
-		B_Print(imm12and10_5, funct3, rs1, rs2, imm4_1and11);
+		int32_t imm11 = (instruction & 128) >> 7;
+		int32_t imm4_1 = (instruction & 3840) >> 7;
+		int32_t imm10_5 = (instruction & 2113929216) >> 25;
+		int32_t imm12 = (instruction & 2147483648) >> 31;
+		int32_t imm = (imm12 << 12) | (imm11 << 11) | (imm10_5 << 5) | (imm4_1); //13 bits long
+		if(imm12 == 1){
+			imm = 0xFFFFE000 | imm;
+		}
+		B_Print(imm, funct3, rs1, rs2);
 
 	} else if (opcode==115) {
 		printf("ecall\n\n");
