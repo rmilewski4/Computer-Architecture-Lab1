@@ -457,8 +457,54 @@ void ECall_Processing() {
 			break;
 	}
 }
-void B_Processing() {
-	// hi
+void B_Processing(uint32_t funct3, uint32_t rs1, uint32_t rs2, int32_t imm, int* branchTaken) {
+	//int32_t imm = (imm12and10_5 & 64) << 5 | (imm4_1and11 & 1) << 10 | (imm12and10_5 & 63) << 4 | (imm4_1and11 & 30) >> 1;
+	
+	switch(funct3) {
+		case 0: //beq
+			if(CURRENT_STATE.REGS[rs1] == CURRENT_STATE.REGS[rs2]){
+				NEXT_STATE.PC += imm;
+				*branchTaken = 1;
+			}
+		break;
+		case 1: //bne
+			if(CURRENT_STATE.REGS[rs1] != CURRENT_STATE.REGS[rs2]){
+				NEXT_STATE.PC += imm;
+				*branchTaken = 1;
+			}
+		break;
+		case 4: //blt
+			if(CURRENT_STATE.REGS[rs1] < CURRENT_STATE.REGS[rs2]){
+				NEXT_STATE.PC += imm;
+				*branchTaken = 1;
+
+			}
+		break;
+		case 5: //bgt
+			if(CURRENT_STATE.REGS[rs1] >= CURRENT_STATE.REGS[rs2]){
+				NEXT_STATE.PC += imm;
+				*branchTaken = 1;
+			}
+		break;
+		case 6: //bltu
+			if(CURRENT_STATE.REGS[rs1] < CURRENT_STATE.REGS[rs2]){
+				NEXT_STATE.PC += imm;
+				*branchTaken = 1;
+
+			}
+		break;
+		case 7: //bgtu
+			if(CURRENT_STATE.REGS[rs1] >= CURRENT_STATE.REGS[rs2]){
+				NEXT_STATE.PC += imm;
+				*branchTaken = 1;
+			}
+		break;
+		default:
+			printf("Invalid instruction");
+			RUN_FLAG = FALSE;
+		break;
+	}
+	
 }
 
 void J_Processing() {
@@ -486,6 +532,7 @@ void handle_instruction()
 		uint32_t funct7 = 0;
 		uint32_t imm = 0;
 		uint32_t imm2 = 0;
+		int branchTaken = 0;
 	//127 in base-10 is = 1111111 in base 2, which will allow us to extract the opcode from the instruction
 	uint32_t opcode = instruction & 127;
 	switch(opcode) {
@@ -523,6 +570,22 @@ void handle_instruction()
 			imm = (instruction & 4261412864) >> 25;
 			S_Processing(imm2,funct3,rs1,rs2,imm);
 			break;
+		//B-type instructions
+		case(99):{
+		uint32_t funct3 = (instruction & 28672) >> 12;
+		uint32_t rs1 = (instruction & 1015808) >> 15;
+		uint32_t rs2 = (instruction & 32505856) >> 20;
+		int32_t imm11 = (instruction & 128) >> 7;
+		int32_t imm4_1 = (instruction & 3840) >> 7;
+		int32_t imm10_5 = (instruction & 2113929216) >> 25;
+		int32_t imm12 = (instruction & 2147483648) >> 31;
+		int32_t imm = (imm12 << 12) | (imm11 << 11) | (imm10_5 << 5) | (imm4_1); //13 bits long
+		if(imm12 == 1){
+			imm = 0xFFFFE000 | imm;
+		}
+			B_Processing(funct3, rs1, rs2, imm, &branchTaken);
+			break;
+		}
 		//SYSCALL/ECall opcode
 		case(115):
 			ECall_Processing();
@@ -531,8 +594,10 @@ void handle_instruction()
 			printf("OPCODE NOT FOUND!\n\n");
 			break;
 	}
-	//Updates program counter, each instruction is 4 bytes.
-	NEXT_STATE.PC += 4;
+	if(branchTaken == 0) {
+		//Updates program counter, each instruction is 4 bytes.
+		NEXT_STATE.PC += 4;
+	}
 }
 
 
@@ -698,6 +763,40 @@ void Iimm_Print(uint32_t rd, uint32_t f3, uint32_t rs1, uint32_t imm){
 
 }
 
+void B_Print(int32_t imm, uint32_t funct3, uint32_t rs1, uint32_t rs2){
+	switch(funct3) {
+		case 0: //beq
+			printf("beq x%d, x%d, %d\n\n", rs1, rs2, imm);
+			break;
+
+		case 1: //bne
+			printf("bne x%d, x%d, %d\n\n", rs1, rs2, imm);
+			break;
+
+		case 4: //blt
+			printf("blt x%d, x%d, %d\n\n", rs1, rs2, imm);
+			break;
+
+		case 5: //bgt
+			printf("bgt x%d, x%d, %d\n\n", rs1, rs2, imm);
+			break;
+
+		case 6: //bltu
+			printf("bltu x%d, x%d, %d\n\n", rs1, rs2, imm);
+			break;
+
+		case 7: //bgtu
+			printf("bgtu x%d, x%d, %d\n\n", rs1, rs2, imm);
+			break;
+		
+		default:
+			printf("Invalid instruction");
+			RUN_FLAG = FALSE;
+			break;
+	}
+
+}
+
 /************************************************************/
 /* Print the instruction at given memory address (in RISCV assembly format)    */
 /************************************************************/
@@ -742,6 +841,21 @@ void print_instruction(uint32_t addr){
 		uint32_t rs2 = (instruction & 32505856) >> 20;
 		uint32_t imm2 = (instruction & 4261412864) >> 25;
 		S_Print(imm2, funct3, rs1, rs2, imm);
+	}  else if(opcode == 99){
+		
+		uint32_t funct3 = (instruction & 28672) >> 12;
+		uint32_t rs1 = (instruction & 1015808) >> 15;
+		uint32_t rs2 = (instruction & 32505856) >> 20;
+		int32_t imm11 = (instruction & 128) >> 7;
+		int32_t imm4_1 = (instruction & 3840) >> 7;
+		int32_t imm10_5 = (instruction & 2113929216) >> 25;
+		int32_t imm12 = (instruction & 2147483648) >> 31;
+		int32_t imm = (imm12 << 12) | (imm11 << 11) | (imm10_5 << 5) | (imm4_1); //13 bits long
+		if(imm12 == 1){
+			imm = 0xFFFFE000 | imm;
+		}
+		B_Print(imm, funct3, rs1, rs2);
+
 	} else if (opcode==115) {
 		printf("ecall\n\n");
 		RUN_FLAG = FALSE;
@@ -766,6 +880,9 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+	//B_Processing(7, 0, 19, 20, 10); // 7, 10 = 117
+
+	
 	strcpy(prog_file, argv[1]);
 	initialize();
 	load_program();
